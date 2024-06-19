@@ -722,7 +722,7 @@ int main(int argc, char ** argv) {
         //fwrite(state_mem.data(), 1, written, fp_write);
         //fclose(fp_write);
         ////fprintf(stderr, "%s : serialized state into %zd out of a maximum of %zd bytes\n", __func__, written, state_mem.size());
-        }
+        //}
 
 
 
