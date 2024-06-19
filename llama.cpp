@@ -6455,7 +6455,7 @@ static bool llm_load_tensors(
                 }
 #endif
             }
-        }
+        } // PENSER : Je dois savoir si je copie les model.layers[i] 
 #ifdef GGML_USE_METAL
         else if (ml.use_mmap && use_mmap_buffer && buft == ggml_backend_metal_buffer_type()) {
             for (uint32_t idx = 0; idx < ml.files.size(); idx++) {
@@ -6524,6 +6524,7 @@ static bool llm_load_tensors(
         LLAMA_LOG_INFO("%s: %10s buffer size = %8.2f MiB\n", __func__, ggml_backend_buffer_name(buf), ggml_backend_buffer_get_size(buf) / 1024.0 / 1024.0);
     }
 
+    // PENSER : c'est bien de pouvoir acces au tensor par leurs nom pour plus tard pouvoir les print plus facilement
     // populate tensors_by_name
     for (ggml_context * ctx : model.ctxs) {
         for (auto * cur = ggml_get_first_tensor(ctx); cur != NULL; cur = ggml_get_next_tensor(ctx, cur)) {
@@ -6772,6 +6773,7 @@ static struct ggml_tensor * llm_build_ffn(
          const llm_build_cb & cb,
                         int   il) {
     struct ggml_tensor * tmp = up ? ggml_mul_mat(ctx, up, cur) : cur;
+    
     cb(tmp, "ffn_up", il);
 
     if (up_b) {

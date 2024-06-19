@@ -5285,7 +5285,7 @@ struct ggml_tensor * ggml_group_norm_inplace(
     return ggml_group_norm_impl(ctx, a, n_groups, true);
 }
 
-// ggml_mul_mat
+// ggml_mul_mat BILLAUD
 
 struct ggml_tensor * ggml_mul_mat(
         struct ggml_context * ctx,
@@ -5294,20 +5294,36 @@ struct ggml_tensor * ggml_mul_mat(
     GGML_ASSERT(ggml_can_mul_mat(a, b));
     GGML_ASSERT(!ggml_is_transposed(a));
 
+    //ggml_graph_export_node(a, ggml_get_name(a), "out.txt");
+    
+    //fprintf(stderr, "Multiplying tensors: %s and %s\n", ggml_get_name(a), ggml_get_name(b));
+    //fprintf(stderr, "Dimension A: %" PRId64 " x %" PRId64 " x %" PRId64 "\n", a->ne[1], a->ne[2], a->ne[3]);
+    //fprintf(stderr, "Dimension B: %" PRId64 " x %" PRId64 " x %" PRId64 "\n", b->ne[1], b->ne[2], b->ne[3]);
+    
+    //fprintf(stderr, "Multiplying tensors: %f and %f\n", ggml_get_data_f32(a)[0], ggml_get_data_f32(b));
+    //fprintf(stderr, "Multiplying tensors: %f and %f\n",   (char *) ggml_get_data(a) [0], (char *) ggml_get_data_f32(b)[1]);
     bool is_node = false;
 
     if (a->grad || b->grad) {
         is_node = true;
     }
-
+    
     const int64_t ne[4] = { a->ne[1], b->ne[1], b->ne[2], b->ne[3] };
     struct ggml_tensor * result = ggml_new_tensor(ctx, GGML_TYPE_F32, 4, ne);
-
+   // fprintf(stderr, "Element base %" PRId64 " of tensor a: %f\n", 0, ggml_get_data_f32(a)[0]);
+    //for (int64_t i = 0; i < a->ne[1]*a->ne[2]*a->ne[3]; i++) {
+     //fprintf(stderr, "Element base %" PRId64 " of tensor a: %f\n", i, ggml_get_data_f32(a)[i]);
+        //ggml_row_size(type, ne[0]);
+    //}
+    
     result->op   = GGML_OP_MUL_MAT;
     result->grad = is_node ? ggml_dup_tensor(ctx, result) : NULL;
     result->src[0] = a;
     result->src[1] = b;
-
+    
+    //fprintf(stderr, "Dimension Res: %" PRId64 " x %" PRId64 " x %" PRId64 "\n\n", result->ne[1], result->ne[2], result->ne[3]);
+    
+    //fprintf(stderr, "Result mult: %f \n", * ggml_get_data_f32(result));
     return result;
 }
 
@@ -19376,11 +19392,15 @@ struct ggml_cplan ggml_graph_plan(const struct ggml_cgraph * cgraph, int n_threa
                             cur = ggml_type_size(GGML_TYPE_F32)
                                 * node->src[0]->ne[0]*node->src[0]->ne[1]
                                 * node->src[1]->ne[2]*node->src[1]->ne[3];
+                                fprintf(stderr, "I pass in the  if\n");
                         }
                     } else
 #endif
                     if (node->src[1]->type != vec_dot_type) {
                         cur = ggml_row_size(vec_dot_type, ggml_nelements(node->src[1]));
+                    fprintf(stderr, "Multiplication Mat : %s == %s X %s\n",ggml_get_name(node),  ggml_get_name(node->src[0]), ggml_get_name(node->src[1]));
+
+    
                     }
                 } break;
             case GGML_OP_MUL_MAT_ID:
