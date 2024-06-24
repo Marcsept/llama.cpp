@@ -9017,14 +9017,22 @@ static void ggml_compute_forward_dup(
 }
 
 // ggml_compute_forward_add
-
+//BILLAUD 
+void BILLAUD_print_float_array(FILE *log, float *array, int size, int row) {
+    fprintf(log, "Row %i : ", row);
+    // Parcourir le tableau et l'imprimer élément par élément
+    for (int i = 0; i < size; ++i) {
+        fprintf(log, "%.8f |", array[i]);  // %.4f pour imprimer avec 4 décimales
+    }
+    fprintf(log, "\n");  // Saut de ligne à la fin du tableau
+}
 static void ggml_compute_forward_add_f32(
         const struct ggml_compute_params * params,
         struct ggml_tensor * dst) {
 
     const struct ggml_tensor * src0 = dst->src[0];
     const struct ggml_tensor * src1 = dst->src[1];
-
+    
     GGML_ASSERT(ggml_can_repeat(src1, src0) && ggml_are_same_shape(src0, dst));
 
     if (params->type == GGML_TASK_TYPE_INIT || params->type == GGML_TASK_TYPE_FINALIZE) {
@@ -9049,6 +9057,8 @@ static void ggml_compute_forward_add_f32(
     const int ir1 = MIN(ir0 + dr, nr);
 
     if (nb10 == sizeof(float)) {
+        //BILLAUD
+        //fprintf(stderr, "END \n Add: %s  +  %s \n", src0->name, src1->name);
         for (int ir = ir0; ir < ir1; ++ir) {
             // src1 is broadcastable across src0 and dst in i1, i2, i3
             const int64_t i03 = ir/(ne02*ne01);
@@ -9071,7 +9081,14 @@ static void ggml_compute_forward_add_f32(
                 ggml_vec_add_f32(ne10, dst_ptr + r*ne10, src0_ptr + r*ne10, src1_ptr);
 #endif
             }
+            //fprintf(stderr, "Element:   %s \n", dst->name);
+            //BILLAUD_print_float_array(stderr, dst_ptr, ne10, ir);
+            //fprintf(stderr, "Element:   %s \n", src0->name);
+            //BILLAUD_print_float_array(stderr, src0_ptr, ne10, ir);
+            //fprintf(stderr, "Element:   %s \n", src1->name);
+            //BILLAUD_print_float_array(stderr, src1_ptr, ne10, ir);
         }
+        
     } else {
         // src1 is not contiguous
         for (int ir = ir0; ir < ir1; ++ir) {
@@ -9302,6 +9319,7 @@ static void ggml_compute_forward_add_f16_f16(
 
             for (int i = 0; i < ne0; i++) {
                 dst_ptr[i] = GGML_FP32_TO_FP16(GGML_FP16_TO_FP32(src0_ptr[i]) + GGML_FP16_TO_FP32(src1_ptr[i]));
+                
             }
         }
     }
@@ -9482,7 +9500,7 @@ static void ggml_compute_forward_add(
                     ggml_compute_forward_add_bf16_bf16(params, dst);
                 }
                 else if (src1->type == GGML_TYPE_F32) {
-                    ggml_compute_forward_add_bf16_f32(params, dst);
+                     ggml_compute_forward_add_bf16_f32(params, dst);
                 }
                 else {
                     GGML_ASSERT(false);
@@ -12488,6 +12506,7 @@ UseGgmlGemm1:;
                     }
                 }
             }
+            // BILLAUD Peux être add un printeur ici pour avoir les mul ? 
         }
 
         return;
@@ -17104,7 +17123,105 @@ static void ggml_compute_forward_cross_entropy_loss_back(
     }
 }
 
-/////////////////////////////////
+///////////////////////////////// BILLAUD new fucntion
+const char* ggml_op_to_string(enum ggml_op op) {
+    switch(op) {
+        case GGML_OP_NONE: return "GGML_OP_NONE";
+        case GGML_OP_DUP: return "GGML_OP_DUP";
+        case GGML_OP_ADD: return "GGML_OP_ADD";
+        case GGML_OP_ADD1: return "GGML_OP_ADD1";
+        case GGML_OP_ACC: return "GGML_OP_ACC";
+        case GGML_OP_SUB: return "GGML_OP_SUB";
+        case GGML_OP_MUL: return "GGML_OP_MUL";
+        case GGML_OP_DIV: return "GGML_OP_DIV";
+        case GGML_OP_SQR: return "GGML_OP_SQR";
+        case GGML_OP_SQRT: return "GGML_OP_SQRT";
+        case GGML_OP_LOG: return "GGML_OP_LOG";
+        case GGML_OP_SUM: return "GGML_OP_SUM";
+        case GGML_OP_SUM_ROWS: return "GGML_OP_SUM_ROWS";
+        case GGML_OP_MEAN: return "GGML_OP_MEAN";
+        case GGML_OP_ARGMAX: return "GGML_OP_ARGMAX";
+        case GGML_OP_REPEAT: return "GGML_OP_REPEAT";
+        case GGML_OP_REPEAT_BACK: return "GGML_OP_REPEAT_BACK";
+        case GGML_OP_CONCAT: return "GGML_OP_CONCAT";
+        case GGML_OP_SILU_BACK: return "GGML_OP_SILU_BACK";
+        case GGML_OP_NORM: return "GGML_OP_NORM";
+        case GGML_OP_RMS_NORM: return "GGML_OP_RMS_NORM";
+        case GGML_OP_RMS_NORM_BACK: return "GGML_OP_RMS_NORM_BACK";
+        case GGML_OP_GROUP_NORM: return "GGML_OP_GROUP_NORM";
+        case GGML_OP_MUL_MAT: return "GGML_OP_MUL_MAT";
+        case GGML_OP_MUL_MAT_ID: return "GGML_OP_MUL_MAT_ID";
+        case GGML_OP_OUT_PROD: return "GGML_OP_OUT_PROD";
+        case GGML_OP_SCALE: return "GGML_OP_SCALE";
+        case GGML_OP_SET: return "GGML_OP_SET";
+        case GGML_OP_CPY: return "GGML_OP_CPY";
+        case GGML_OP_CONT: return "GGML_OP_CONT";
+        case GGML_OP_RESHAPE: return "GGML_OP_RESHAPE";
+        case GGML_OP_VIEW: return "GGML_OP_VIEW";
+        case GGML_OP_PERMUTE: return "GGML_OP_PERMUTE";
+        case GGML_OP_TRANSPOSE: return "GGML_OP_TRANSPOSE";
+        case GGML_OP_GET_ROWS: return "GGML_OP_GET_ROWS";
+        case GGML_OP_GET_ROWS_BACK: return "GGML_OP_GET_ROWS_BACK";
+        case GGML_OP_DIAG: return "GGML_OP_DIAG";
+        case GGML_OP_DIAG_MASK_INF: return "GGML_OP_DIAG_MASK_INF";
+        case GGML_OP_DIAG_MASK_ZERO: return "GGML_OP_DIAG_MASK_ZERO";
+        case GGML_OP_SOFT_MAX: return "GGML_OP_SOFT_MAX";
+        case GGML_OP_SOFT_MAX_BACK: return "GGML_OP_SOFT_MAX_BACK";
+        case GGML_OP_ROPE: return "GGML_OP_ROPE";
+        case GGML_OP_ROPE_BACK: return "GGML_OP_ROPE_BACK";
+        case GGML_OP_CLAMP: return "GGML_OP_CLAMP";
+        case GGML_OP_CONV_TRANSPOSE_1D: return "GGML_OP_CONV_TRANSPOSE_1D";
+        case GGML_OP_IM2COL: return "GGML_OP_IM2COL";
+        case GGML_OP_CONV_TRANSPOSE_2D: return "GGML_OP_CONV_TRANSPOSE_2D";
+        case GGML_OP_POOL_1D: return "GGML_OP_POOL_1D";
+        case GGML_OP_POOL_2D: return "GGML_OP_POOL_2D";
+        case GGML_OP_UPSCALE: return "GGML_OP_UPSCALE";
+        case GGML_OP_PAD: return "GGML_OP_PAD";
+        case GGML_OP_ARANGE: return "GGML_OP_ARANGE";
+        case GGML_OP_TIMESTEP_EMBEDDING: return "GGML_OP_TIMESTEP_EMBEDDING";
+        case GGML_OP_ARGSORT: return "GGML_OP_ARGSORT";
+        case GGML_OP_LEAKY_RELU: return "GGML_OP_LEAKY_RELU";
+        case GGML_OP_FLASH_ATTN_EXT: return "GGML_OP_FLASH_ATTN_EXT";
+        case GGML_OP_FLASH_ATTN_BACK: return "GGML_OP_FLASH_ATTN_BACK";
+        case GGML_OP_SSM_CONV: return "GGML_OP_SSM_CONV";
+        case GGML_OP_SSM_SCAN: return "GGML_OP_SSM_SCAN";
+        case GGML_OP_WIN_PART: return "GGML_OP_WIN_PART";
+        case GGML_OP_WIN_UNPART: return "GGML_OP_WIN_UNPART";
+        case GGML_OP_GET_REL_POS: return "GGML_OP_GET_REL_POS";
+        case GGML_OP_ADD_REL_POS: return "GGML_OP_ADD_REL_POS";
+        case GGML_OP_UNARY: return "GGML_OP_UNARY";
+        case GGML_OP_MAP_UNARY: return "GGML_OP_MAP_UNARY";
+        case GGML_OP_MAP_BINARY: return "GGML_OP_MAP_BINARY";
+        case GGML_OP_MAP_CUSTOM1_F32: return "GGML_OP_MAP_CUSTOM1_F32";
+        case GGML_OP_MAP_CUSTOM2_F32: return "GGML_OP_MAP_CUSTOM2_F32";
+        case GGML_OP_MAP_CUSTOM3_F32: return "GGML_OP_MAP_CUSTOM3_F32";
+        case GGML_OP_MAP_CUSTOM1: return "GGML_OP_MAP_CUSTOM1";
+        case GGML_OP_MAP_CUSTOM2: return "GGML_OP_MAP_CUSTOM2";
+        case GGML_OP_MAP_CUSTOM3: return "GGML_OP_MAP_CUSTOM3";
+        case GGML_OP_CROSS_ENTROPY_LOSS: return "GGML_OP_CROSS_ENTROPY_LOSS";
+        case GGML_OP_CROSS_ENTROPY_LOSS_BACK: return "GGML_OP_CROSS_ENTROPY_LOSS_BACK";
+        case GGML_OP_COUNT: return "GGML_OP_COUNT";
+        default: return "Unknown ggml_op";
+    }
+}
+
+void BILLAUD_print_solo_f32(
+        const struct ggml_compute_params * params,
+        struct ggml_tensor * dst ){
+
+
+    assert(params->ith == 0);
+
+    const int n  = ggml_nrows(dst);
+    const int nc = dst->ne[0];
+
+    assert( dst->nb[0] == sizeof(float));
+
+    fprintf(stderr, "Element:   %s \n Operation : %s \n", dst->name, ggml_op_to_string(dst->op));
+    for (int i = 0; i < n; i++) {
+        BILLAUD_print_float_array(stderr, (float *) ((char *) dst->data  + i*( dst->nb[1])), nc, i);
+    }
+}
 
 static void ggml_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * tensor, struct ggml_compute_state * state) {
     GGML_ASSERT(params);
@@ -17438,6 +17555,8 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
                 GGML_ASSERT(false);
             } break;
     }
+    //BILLAUD
+    BILLAUD_print_solo_f32(params, tensor);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -19398,7 +19517,8 @@ struct ggml_cplan ggml_graph_plan(const struct ggml_cgraph * cgraph, int n_threa
 #endif
                     if (node->src[1]->type != vec_dot_type) {
                         cur = ggml_row_size(vec_dot_type, ggml_nelements(node->src[1]));
-                    fprintf(stderr, "Multiplication Mat : %s == %s X %s\n",ggml_get_name(node),  ggml_get_name(node->src[0]), ggml_get_name(node->src[1]));
+                    // BILLAUD
+                    //fprintf(stderr,"\n"); // "Multip!lication Mat : %s == %s X %s\n",ggml_get_name(node),  ggml_get_name(node->src[0]), ggml_get_name(node->src[1]));
 
     
                     }
