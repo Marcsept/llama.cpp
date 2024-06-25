@@ -89,7 +89,6 @@ static void atomic_flag_clear(atomic_flag * ptr) {
 }
 
 typedef HANDLE pthread_t;
-
 typedef DWORD thread_ret_t;
 static int pthread_create(pthread_t * out, void * unused, thread_ret_t(*func)(void *), void * arg) {
     (void) unused;
@@ -140,6 +139,8 @@ typedef pthread_t ggml_thread_t;
     (!defined(TARGET_OS_TV) && !defined(TARGET_OS_WATCH))
 
 #include <sys/wait.h>
+
+
 
 void ggml_print_backtrace(void) {
     /*
@@ -9018,11 +9019,13 @@ static void ggml_compute_forward_dup(
 
 // ggml_compute_forward_add
 //BILLAUD 
-void BILLAUD_print_float_array(FILE *log, float *array, int size, int row) {
-    fprintf(log, "Row %i : ", row);
+void BILLAUD_print_float_array(FILE *log, float *array, int size, int row, int n_row) {
+    int row_2D = row / n_row;
+    int row_3D = row % n_row;
+    fprintf(log, "(2D,3D) (%i, %i) : ", row_2D, row_3D);
     // Parcourir le tableau et l'imprimer élément par élément
     for (int i = 0; i < size; ++i) {
-        fprintf(log, "%.8f |", array[i]);  // %.4f pour imprimer avec 4 décimales
+        fprintf(log, "%f |", array[i]);  // %.7f pour imprimer avec 4 décimales
     }
     fprintf(log, "\n");  // Saut de ligne à la fin du tableau
 }
@@ -17204,23 +17207,110 @@ const char* ggml_op_to_string(enum ggml_op op) {
         default: return "Unknown ggml_op";
     }
 }
+int ggml_op_operand_count(enum ggml_op op) {
+    switch(op) {
+        case GGML_OP_NONE:
+        case GGML_OP_DUP:
+        case GGML_OP_ADD1:
+        case GGML_OP_SUB:
+        case GGML_OP_SQR:
+        case GGML_OP_SQRT:
+        case GGML_OP_LOG:
+        case GGML_OP_SUM:
+        case GGML_OP_MEAN:
+        case GGML_OP_ARGMAX:
+        case GGML_OP_REPEAT:
+        case GGML_OP_REPEAT_BACK:
+        case GGML_OP_SILU_BACK:
+        case GGML_OP_NORM:
+        case GGML_OP_RMS_NORM:
+        case GGML_OP_RMS_NORM_BACK:
+        case GGML_OP_GROUP_NORM:
+        case GGML_OP_SCALE:
+        case GGML_OP_SET:
+        case GGML_OP_CPY:
+        case GGML_OP_CONT:
+        case GGML_OP_RESHAPE:
+        case GGML_OP_VIEW:
+        case GGML_OP_PERMUTE:
+        case GGML_OP_TRANSPOSE:
+        case GGML_OP_GET_ROWS:
+        case GGML_OP_GET_ROWS_BACK:
+        case GGML_OP_DIAG:
+        case GGML_OP_DIAG_MASK_INF:
+        case GGML_OP_DIAG_MASK_ZERO:
+        case GGML_OP_SOFT_MAX:
+        case GGML_OP_SOFT_MAX_BACK:
+        case GGML_OP_ROPE:
+        case GGML_OP_ROPE_BACK:
+        case GGML_OP_CLAMP:
+        case GGML_OP_POOL_1D:
+        case GGML_OP_POOL_2D:
+        case GGML_OP_UPSCALE:
+        case GGML_OP_PAD:
+        case GGML_OP_ARANGE:
+        case GGML_OP_TIMESTEP_EMBEDDING:
+        case GGML_OP_ARGSORT:
+        case GGML_OP_LEAKY_RELU:
+        case GGML_OP_FLASH_ATTN_EXT:
+        case GGML_OP_FLASH_ATTN_BACK:
+        case GGML_OP_SSM_CONV:
+        case GGML_OP_SSM_SCAN:
+        case GGML_OP_WIN_PART:
+        case GGML_OP_WIN_UNPART:
+        case GGML_OP_GET_REL_POS:
+        case GGML_OP_ADD_REL_POS:
+        case GGML_OP_UNARY:
+        case GGML_OP_MAP_UNARY:
+        case GGML_OP_MAP_CUSTOM1_F32:
+        case GGML_OP_MAP_CUSTOM1:
+            return 1;
 
+        case GGML_OP_ADD:
+        case GGML_OP_ACC:
+        case GGML_OP_MUL:
+        case GGML_OP_DIV:
+        case GGML_OP_SUM_ROWS:
+        case GGML_OP_CONCAT:
+        case GGML_OP_MUL_MAT:
+        case GGML_OP_MUL_MAT_ID:
+        case GGML_OP_OUT_PROD:
+        case GGML_OP_CONV_TRANSPOSE_1D:
+        case GGML_OP_IM2COL:
+        case GGML_OP_CONV_TRANSPOSE_2D:
+        case GGML_OP_MAP_BINARY:
+        case GGML_OP_MAP_CUSTOM2_F32:
+        case GGML_OP_MAP_CUSTOM2:
+            return 2;
+
+        case GGML_OP_MAP_CUSTOM3_F32:
+        case GGML_OP_MAP_CUSTOM3:
+            return 3;
+
+        case GGML_OP_CROSS_ENTROPY_LOSS:
+        case GGML_OP_CROSS_ENTROPY_LOSS_BACK:
+        case GGML_OP_COUNT:
+        default:
+            return -1; // Unknown or unsupported operation
+    }
+}
 void BILLAUD_print_solo_f32(
         const struct ggml_compute_params * params,
         struct ggml_tensor * dst ){
 
+    
 
     assert(params->ith == 0);
 
     const int n  = ggml_nrows(dst);
     const int nc = dst->ne[0];
-
     assert( dst->nb[0] == sizeof(float));
-
-    fprintf(stderr, "Element:   %s \n Operation : %s \n", dst->name, ggml_op_to_string(dst->op));
+    //Res_name / Dim1/ Dim2 / Dim3 / Operation / Src1 / Src2 
+    fprintf(stderr, "Log_data : %s : %d : %d : %d : %d : %s \n", dst->name, dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], ggml_op_to_string(dst->op)); 
     for (int i = 0; i < n; i++) {
-        BILLAUD_print_float_array(stderr, (float *) ((char *) dst->data  + i*( dst->nb[1])), nc, i);
-    }
+        BILLAUD_print_float_array(stderr, (float *) ((char *) dst->data  + i*( dst->nb[1])), nc, i, dst->ne[2]);
+    };
+
 }
 
 static void ggml_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * tensor, struct ggml_compute_state * state) {
@@ -17556,7 +17646,10 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             } break;
     }
     //BILLAUD
-    BILLAUD_print_solo_f32(params, tensor);
+    if(params->ith == 0){
+        BILLAUD_print_solo_f32(params, tensor);
+    }
+    
 }
 
 ////////////////////////////////////////////////////////////////////////////////
