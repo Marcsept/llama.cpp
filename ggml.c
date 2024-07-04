@@ -17421,7 +17421,7 @@ void BILLAUD_print_solo_f32(
 
     FILE *logFile = fopen("logfile_forward.txt", "a"); // "a" pour append, ajouter à la fin du fichier
     if (logFile == NULL) {
-        perror("Erreur à l'ouverture du fichier de log");
+        perror("Erreur à l'ouverture du fichier de log2");
         exit(EXIT_FAILURE);
     }
 
@@ -17443,7 +17443,7 @@ void BILLAUD_print_waight_f32( // Unused
     //fprintf(stderr, "%s \n", dst->src[0]->name);
     FILE *logFile = fopen("logfile_weigt.txt", "a"); // "a" pour append, ajouter à la fin du fichier
     if (logFile == NULL) {
-        perror("Erreur à l'ouverture du fichier de log");
+        perror("Erreur à l'ouverture du fichier de log3");
         exit(EXIT_FAILURE);
     } 
 
@@ -17488,10 +17488,10 @@ void BILLAUD_print_weight_f32(
     snprintf(filename, sizeof(filename), "weights.csv", name);
     
    
-
+    
     FILE *logFile = fopen(filename, "a"); 
     if (logFile == NULL) {
-        perror("Erreur à l'ouverture du fichier de log");
+        perror("Erreur à l'ouverture du fichier de log1");
         exit(EXIT_FAILURE);
     }
 
