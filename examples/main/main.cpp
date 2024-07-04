@@ -930,6 +930,5 @@ int main(int argc, char ** argv) {
 #ifndef LOG_DISABLE_LOGS
     LOG_TEE("Log end\n");
 #endif // LOG_DISABLE_LOGS
-
     return 0;
 }
