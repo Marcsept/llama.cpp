@@ -17485,14 +17485,9 @@ void BILLAUD_print_weight_f32(
     assert(params->ith == 0);
 
     char filename[256];
-    snprintf(filename, sizeof(filename), "weight/%s.csv", name);
+    snprintf(filename, sizeof(filename), "weights.csv", name);
     
-    bool new_file = false;
-    //FILE *logFile_read = fopen(filename, "r");
-    //if (logFile_read == NULL) {
-    //    new_file = true;
-    //}
-    //fclose(logFile_read);
+   
 
     FILE *logFile = fopen(filename, "a"); 
     if (logFile == NULL) {
@@ -17500,10 +17495,7 @@ void BILLAUD_print_weight_f32(
         exit(EXIT_FAILURE);
     }
 
-    //header
-    if(new_file){
-        fprintf(logFile, "Operation_name;Tensor_name;Dim1;Dim2;Dim3;min;max;mean;mean_square;var;ecart_type;zero_per;positive_ratio;negative_ratio;minus_1;minus_1_05;minus_05_01;minus_01_0;plus_0_01;plus_01_05;plus_05_1;plus_1\n");
-    }
+   
     
     if(strstr(dst->src[0]->name, name)){ // ICI le problème avec les multiplication de matrice. 
         //fprintf(stderr, "%s \n", dst->src[0]->name);
