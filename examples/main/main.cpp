@@ -709,21 +709,6 @@ int main(int argc, char ** argv) {
             }
         }
 
-        //Add by valère BILLAUD
-        //{
-        //std::vector<uint8_t> state_mem(llama_state_get_size(ctx));
-        //const size_t written = llama_state_get_data(ctx, state_mem.data());
-        //// Construire le nom du fichier
-        //std::string filename = "../State/" + std::to_string(cpt) + ".bin";
-
-        //// Ouvrir le fichier en mode écriture binaire
-        //FILE *fp_write = fopen(filename.c_str(), "wb");
-        //cpt = cpt +1;
-        //fwrite(state_mem.data(), 1, written, fp_write);
-        //fclose(fp_write);
-        ////fprintf(stderr, "%s : serialized state into %zd out of a maximum of %zd bytes\n", __func__, written, state_mem.size());
-        //}
-
 
 
         // display text

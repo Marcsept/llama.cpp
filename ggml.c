@@ -9017,22 +9017,22 @@ static void ggml_compute_forward_dup(
     }
 }
 
-// ggml_compute_forward_add
-//BILLAUD 
 
 
 
-void BILLAUD_print_float_array(FILE *log, float *array, int size, int row, int n_row) {
-    int row_2D = row / n_row;
-    int row_3D = row % n_row;
-    fprintf(log, "(%i, %i)|", row_2D, row_3D);
-    // Parcourir le tableau et l'imprimer élément par élément
-    for (int i = 0; i < size; ++i) {
-        fprintf(log, "%f|", array[i]); 
-    }
-    fprintf(log, "\n");  // Saut de ligne à la fin du tableau
-}
+/**
+ * Print element of a Array
+ * @param log: where print
+ * @param params: params
+ * @param dst: the tensor who contain the operation
+ * @param size: size
+ * @param n: number of row
+ * @param p: index of child of dst we need to print
+ * @param binary_: if it's a binary operation or not
+ * @return: void
+ */
 void BILLAUD_print_float_array_weigth(FILE *log, const struct ggml_compute_params * params, struct ggml_tensor * dst,  int size, int n, int p, bool binary_) {
+    
     float min = 99999;
     float max = -99999;
     double mean = 0;
@@ -9134,7 +9134,7 @@ void BILLAUD_print_float_array_weigth(FILE *log, const struct ggml_compute_param
     zero_per = zero_per / size_total; 
     positive_ratio = positive_ratio / size_total;
     negative_ratio = negative_ratio / size_total;
-    minus_1 = minus_1;
+    minus_1 = minus_1/size_total;
     minus_1_05 = minus_1_05/size_total;
     minus_05_01 = minus_05_01/size_total;
     minus_01_0 = minus_01_0/size_total;
@@ -9184,8 +9184,6 @@ static void ggml_compute_forward_add_f32(
     const int ir1 = MIN(ir0 + dr, nr);
 
     if (nb10 == sizeof(float)) {
-        //BILLAUD
-        //fprintf(stderr, "END \n Add: %s  +  %s \n", src0->name, src1->name);
         for (int ir = ir0; ir < ir1; ++ir) {
             // src1 is broadcastable across src0 and dst in i1, i2, i3
             const int64_t i03 = ir/(ne02*ne01);
@@ -12588,7 +12586,6 @@ static void ggml_compute_forward_mul_mat(
     const bool src1_cont = ggml_is_contiguous(src1);
 
     if (src1_cont) {
-        //fprintf(stderr, "BILLAUD : Src1 contiguous ? Yes \n ");
         for (int64_t i13 = 0; i13 < ne13; i13++)
             for (int64_t i12 = 0; i12 < ne12; i12++)
                 if (!llamafile_sgemm(ne01, ne11, ne00/ggml_blck_size(src0->type),
@@ -12629,7 +12626,6 @@ UseGgmlGemm1:;
                     }
                 }
             }
-            // BILLAUD Peux être add un printeur ici pour avoir les mul ? 
         }
 
         return;
@@ -17246,7 +17242,11 @@ static void ggml_compute_forward_cross_entropy_loss_back(
     }
 }
 
-///////////////////////////////// BILLAUD new fucntion
+/**
+ * transforme a ggml_op to a char*
+ * @param ggml_op: where operation
+ * @return: char*
+ */
 const char* ggml_op_to_string(enum ggml_op op) {
     switch(op) {
         case GGML_OP_NONE: return "GGML_OP_NONE";
@@ -17327,156 +17327,17 @@ const char* ggml_op_to_string(enum ggml_op op) {
         default: return "Unknown ggml_op";
     }
 }
-int ggml_op_operand_count(enum ggml_op op) {
-    switch(op) {
-        case GGML_OP_NONE:
-        case GGML_OP_DUP:
-        case GGML_OP_ADD1:
-        case GGML_OP_SUB:
-        case GGML_OP_SQR:
-        case GGML_OP_SQRT:
-        case GGML_OP_LOG:
-        case GGML_OP_SUM:
-        case GGML_OP_MEAN:
-        case GGML_OP_ARGMAX:
-        case GGML_OP_REPEAT:
-        case GGML_OP_REPEAT_BACK:
-        case GGML_OP_SILU_BACK:
-        case GGML_OP_NORM:
-        case GGML_OP_RMS_NORM:
-        case GGML_OP_RMS_NORM_BACK:
-        case GGML_OP_GROUP_NORM:
-        case GGML_OP_SCALE:
-        case GGML_OP_SET:
-        case GGML_OP_CPY:
-        case GGML_OP_CONT:
-        case GGML_OP_RESHAPE:
-        case GGML_OP_VIEW:
-        case GGML_OP_PERMUTE:
-        case GGML_OP_TRANSPOSE:
-        case GGML_OP_GET_ROWS:
-        case GGML_OP_GET_ROWS_BACK:
-        case GGML_OP_DIAG:
-        case GGML_OP_DIAG_MASK_INF:
-        case GGML_OP_DIAG_MASK_ZERO:
-        case GGML_OP_SOFT_MAX:
-        case GGML_OP_SOFT_MAX_BACK:
-        case GGML_OP_ROPE:
-        case GGML_OP_ROPE_BACK:
-        case GGML_OP_CLAMP:
-        case GGML_OP_POOL_1D:
-        case GGML_OP_POOL_2D:
-        case GGML_OP_UPSCALE:
-        case GGML_OP_PAD:
-        case GGML_OP_ARANGE:
-        case GGML_OP_TIMESTEP_EMBEDDING:
-        case GGML_OP_ARGSORT:
-        case GGML_OP_LEAKY_RELU:
-        case GGML_OP_FLASH_ATTN_EXT:
-        case GGML_OP_FLASH_ATTN_BACK:
-        case GGML_OP_SSM_CONV:
-        case GGML_OP_SSM_SCAN:
-        case GGML_OP_WIN_PART:
-        case GGML_OP_WIN_UNPART:
-        case GGML_OP_GET_REL_POS:
-        case GGML_OP_ADD_REL_POS:
-        case GGML_OP_UNARY:
-        case GGML_OP_MAP_UNARY:
-        case GGML_OP_MAP_CUSTOM1_F32:
-        case GGML_OP_MAP_CUSTOM1:
-            return 1;
-
-        case GGML_OP_ADD:
-        case GGML_OP_ACC:
-        case GGML_OP_MUL:
-        case GGML_OP_DIV:
-        case GGML_OP_SUM_ROWS:
-        case GGML_OP_CONCAT:
-        case GGML_OP_MUL_MAT:
-        case GGML_OP_MUL_MAT_ID:
-        case GGML_OP_OUT_PROD:
-        case GGML_OP_CONV_TRANSPOSE_1D:
-        case GGML_OP_IM2COL:
-        case GGML_OP_CONV_TRANSPOSE_2D:
-        case GGML_OP_MAP_BINARY:
-        case GGML_OP_MAP_CUSTOM2_F32:
-        case GGML_OP_MAP_CUSTOM2:
-            return 2;
-
-        case GGML_OP_MAP_CUSTOM3_F32:
-        case GGML_OP_MAP_CUSTOM3:
-            return 3;
-
-        case GGML_OP_CROSS_ENTROPY_LOSS:
-        case GGML_OP_CROSS_ENTROPY_LOSS_BACK:
-        case GGML_OP_COUNT:
-        default:
-            return -1; // Unknown or unsupported operation
-    }
-}
-void BILLAUD_print_solo_f32(
-        const struct ggml_compute_params * params,
-        struct ggml_tensor * dst ){
-    assert(params->ith == 0);
-
-    FILE *logFile = fopen("logfile_forward.txt", "a"); // "a" pour append, ajouter à la fin du fichier
-    if (logFile == NULL) {
-        perror("Erreur à l'ouverture du fichier de log2");
-        exit(EXIT_FAILURE);
-    }
-
-    const int n  = ggml_nrows(dst);
-    const int nc = dst->ne[0];
-    assert( dst->nb[0] == sizeof(float));
-    //Res_name / Dim1/ Dim2 / Dim3 / Operation / Src1 / Src2 
-    fprintf(logFile, "Log_data : %s : %d : %d : %d : %d : %s \n", dst->name, dst->ne[0], dst->ne[1], dst->ne[2], dst->ne[3], ggml_op_to_string(dst->op)); 
-    for (int i = 0; i < n; i++) {
-        BILLAUD_print_float_array(logFile, (float *) ((char *) dst->data  + i*( dst->nb[1])), nc, i, dst->ne[2]);
-    };
-    fclose(logFile);
-
-}
-void BILLAUD_print_waight_f32( // Unused
-        const struct ggml_compute_params * params,
-        struct ggml_tensor * dst ){
-    assert(params->ith == 0);
-    //fprintf(stderr, "%s \n", dst->src[0]->name);
-    FILE *logFile = fopen("logfile_weigt.txt", "a"); // "a" pour append, ajouter à la fin du fichier
-    if (logFile == NULL) {
-        perror("Erreur à l'ouverture du fichier de log3");
-        exit(EXIT_FAILURE);
-    } 
-
-    if(strstr(dst->src[0]->name, "weight")){
-        const int n  = ggml_nrows(dst->src[0]);
-        const int nc = dst->src[0]->ne[0];
-        assert( dst->src[0]->nb[0] == sizeof(float));
-        fprintf(logFile, "%s \n", dst->src[0]->name);
-        //Res_name / Dim1/ Dim2 / Dim3 / Operation / Src1 / Src2 
-        fprintf(logFile, "%s : %d : %d : %d : %d  \n", dst->src[0]->name, dst->src[0]->ne[0], dst->src[0]->ne[1], dst->src[0]->ne[2]); 
-        for (int i = 0; i < n; i++) {
-            BILLAUD_print_float_array(logFile, (float *) ((char *) dst->src[0]->data  + i*( dst->src[0]->nb[1])), nc, i, dst->src[0]->ne[2]);
-        };
-
-    
-    } if(strstr(dst->src[1]->name, "weight")) {
-        const int n  = ggml_nrows(dst->src[1]);
-        const int nc = dst->src[1]->ne[0];
-        assert( dst->src[1]->nb[0] == sizeof(float));
-        fprintf(logFile, "%s \n", dst->src[1]->name);
-        //Res_name / Dim1/ Dim2 / Dim3 / Operation / Src1 / Src2 
-        fprintf(logFile, "%s : %d : %d : %d : %d  \n", dst->src[1]->name, dst->src[1]->ne[0], dst->src[1]->ne[1], dst->src[1]->ne[2]); 
-        for (int i = 0; i < n; i++) {
-            BILLAUD_print_float_array(logFile, (float *) ((char *) dst->src[1]->data  + i*( dst->src[1]->nb[1])), nc, i, dst->src[1]->ne[2]);
-        };
-
-    }
-    fclose(logFile);
-}
 
 
 
-
+/**
+ * Print element of a Array
+ * @param params: params
+ * @param dst: the tensor who contain the operation
+ * @param name: what char* in array name
+ * @param binary: if it's a binary operation or not
+ * @return: void
+ */
 void BILLAUD_print_weight_f32(
         const struct ggml_compute_params * params,
         struct ggml_tensor * dst,
@@ -17497,42 +17358,36 @@ void BILLAUD_print_weight_f32(
 
    
     
-    if(strstr(dst->src[0]->name, name)){ // ICI le problème avec les multiplication de matrice. 
-        //fprintf(stderr, "%s \n", dst->src[0]->name);
+    if(strstr(dst->src[0]->name, name)){ 
         const int n  = ggml_nrows(dst->src[0]);
         const int nc = dst->src[0]->ne[0];
         assert( dst->src[0]->nb[0] == sizeof(float));
         //Res_name / Dim1/ Dim2 / Dim3 / Operation / Src1 / Src2 
         fprintf(logFile, "%s;%s;%d;%d;%d;",ggml_op_to_string(dst->op), dst->src[0]->name, dst->src[0]->ne[0], dst->src[0]->ne[1], dst->src[0]->ne[2]); 
-        //for (int i = 0; i < n; i++) {
-            BILLAUD_print_float_array_weigth(logFile, params, dst, nc, n, 0, binary);
+        BILLAUD_print_float_array_weigth(logFile, params, dst, nc, n, 0, binary);
         
-    //
-    
-    
-    }else { if(strstr(dst->src[1]->name, name)) { // Good no problem her.
-        //fprintf(stderr, "%s \n", dst->src[1]->name);
+    }else { if(strstr(dst->src[1]->name, name)) { 
         const int n  = ggml_nrows(dst->src[1]);
         const int nc = dst->src[1]->ne[0];
         assert( dst->src[1]->nb[0] == sizeof(float));
         //Res_name / Dim1/ Dim2 / Dim3 / Operation / Src1 / Src2 
         fprintf(logFile, "%s;%s;%d;%d;%d;", ggml_op_to_string(dst->op), dst->src[1]->name, dst->src[1]->ne[0], dst->src[1]->ne[1], dst->src[1]->ne[2]); 
-        //for (int i = 0; i < n; i++) {
-            BILLAUD_print_float_array_weigth(logFile, params, dst, nc, n, 1, binary);
-        //};
+        
+        BILLAUD_print_float_array_weigth(logFile, params, dst, nc, n, 1, binary);
+
 
     }
     }
     fclose(logFile);
-    //char command[100];
-    //sprintf(command, "python3 weight.py %s", filename);
-    //int status = system(command);
-    //if (status == -1) {
-    //    perror("system");
-    //}
-
 }
 
+
+/**
+ * Call diferent print methode
+ * @param params: params
+ * @param dst: the tensor who contain the operation
+ * @return: void
+ */
 void BILLAUD_weight_repartition(
         const struct ggml_compute_params * params,
         struct ggml_tensor * dst){
@@ -17584,7 +17439,7 @@ void BILLAUD_weight_repartition(
 
         char * output = "output.weight";
 
-        if((strstr(name1, output)) || (strstr(name2, output))){
+        if((strstr(name1, output) && not(strstr(name1, "attn_"))) || (strstr(name2, output)&& not(strstr(name2, "attn_")))){ // BILLAUD I change here to verifieir attn_
             BILLAUD_print_weight_f32(params, dst, output, true);
         }
 
@@ -17930,10 +17785,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
                 GGML_ASSERT(false);
             } break;
     }
-    //BILLAUD
-    if(params->ith == 0){
-        //BILLAUD_print_solo_f32(params, tensor);
-    }
+
     
 }
 
