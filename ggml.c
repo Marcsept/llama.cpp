@@ -17399,7 +17399,7 @@ void BILLAUD_weight_repartition(
 
         if((strstr(name1, attn_norm)) || (strstr(name2, attn_norm))){
             BILLAUD_print_weight_f32(params, dst, attn_norm, false);
-            fprintf(stderr, "%s\n", attn_norm);
+            //fprintf(stderr, "%s\n", attn_norm);
         }
 
         char * attn_qkv = "attn_qkv.weight";
@@ -17482,7 +17482,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             } break;
         case GGML_OP_ADD:
             {
-                fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
+                //fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
                 BILLAUD_weight_repartition(params, tensor);
                 ggml_compute_forward_add(params, tensor);
             } break;
@@ -17500,7 +17500,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             } break;
         case GGML_OP_MUL:
             {  
-                fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
+                //fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
                 BILLAUD_weight_repartition(params, tensor);
                 ggml_compute_forward_mul(params, tensor);
             } break;
@@ -17571,7 +17571,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
         case GGML_OP_MUL_MAT:
             {
                 if(toggle()) { //Because this function was call 2 time when it's this operation.
-                    fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
+                    //fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
                     BILLAUD_weight_repartition(params, tensor);
                 }
                 ggml_compute_forward_mul_mat(params, tensor, state);
