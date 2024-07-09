@@ -17399,54 +17399,74 @@ void BILLAUD_weight_repartition(
 
         if((strstr(name1, attn_norm)) || (strstr(name2, attn_norm))){
             BILLAUD_print_weight_f32(params, dst, attn_norm, false);
+            fprintf(stderr, "%s\n", attn_norm);
         }
 
         char * attn_qkv = "attn_qkv.weight";
 
         if((strstr(name1, attn_qkv)) || (strstr(name2, attn_qkv))){
             BILLAUD_print_weight_f32(params, dst, attn_qkv, true);
+            //fprintf(stderr, "%s\n", attn_qkv);
         }
 
         char * attn_output = "attn_output.weight";
 
         if((strstr(name1, attn_output)) || (strstr(name2, attn_output))){
             BILLAUD_print_weight_f32(params, dst, attn_output, true);
+            //fprintf(stderr, "%s\n", attn_output);
         }
 
         char * ffn_norm = "ffn_norm.weight";
 
         if((strstr(name1, ffn_norm)) || (strstr(name2, ffn_norm))){
             BILLAUD_print_weight_f32(params, dst, ffn_norm, false);
+            //fprintf(stderr, "%s\n", ffn_norm);
         }
 
         char * ffn_up = "ffn_up.weight";
 
         if((strstr(name1, ffn_up)) || (strstr(name2, ffn_up))){
             BILLAUD_print_weight_f32(params, dst, ffn_up, true);
+            //fprintf(stderr, "%s\n", ffn_up);
         }
 
         char * ffn_down = "ffn_down.weight";
 
         if((strstr(name1, ffn_down)) || (strstr(name2, ffn_down))){
             BILLAUD_print_weight_f32(params, dst, ffn_down, true);
+            //fprintf(stderr, "%s\n", ffn_down);
         }
 
         char * output_norm = "output_norm.weight";
 
         if((strstr(name1, output_norm)) || (strstr(name2, output_norm))){
             BILLAUD_print_weight_f32(params, dst, output_norm, false);
+            //fprintf(stderr, "%s\n", output_norm);
         }
 
         char * output = "output.weight";
 
-        if((strstr(name1, output) && not(strstr(name1, "attn_"))) || (strstr(name2, output)&& not(strstr(name2, "attn_")))){ // BILLAUD I change here to verifieir attn_
+        if((strstr(name1, output) && !(strstr(name1, "attn_"))) || (strstr(name2, output)&& !(strstr(name2, "attn_")))){ // BILLAUD I change here to verifieir attn_
             BILLAUD_print_weight_f32(params, dst, output, true);
+            //fprintf(stderr, "%s\n", output);
         }
 
 
 
 
         }
+
+/**
+ * alternate between true and false
+ * @return: True or False
+ */
+bool toggle() {
+    static bool state = true;
+    bool current_state = state;
+    state = !state;
+    return current_state;
+}
+
 
 static void ggml_compute_forward(struct ggml_compute_params * params, struct ggml_tensor * tensor, struct ggml_compute_state * state) {
     GGML_ASSERT(params);
@@ -17462,7 +17482,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             } break;
         case GGML_OP_ADD:
             {
-                
+                fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
                 BILLAUD_weight_repartition(params, tensor);
                 ggml_compute_forward_add(params, tensor);
             } break;
@@ -17479,8 +17499,8 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
                 ggml_compute_forward_sub(params, tensor);
             } break;
         case GGML_OP_MUL:
-            {
-                
+            {  
+                fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
                 BILLAUD_weight_repartition(params, tensor);
                 ggml_compute_forward_mul(params, tensor);
             } break;
@@ -17550,7 +17570,10 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             } break;
         case GGML_OP_MUL_MAT:
             {
-                BILLAUD_weight_repartition(params, tensor);
+                if(toggle()) { //Because this function was call 2 time when it's this operation.
+                    fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
+                    BILLAUD_weight_repartition(params, tensor);
+                }
                 ggml_compute_forward_mul_mat(params, tensor, state);
             } break;
         case GGML_OP_MUL_MAT_ID:
