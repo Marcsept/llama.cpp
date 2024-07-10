@@ -499,7 +499,6 @@ int main(int argc, char ** argv) {
         fprintf(stderr, "%s: failed to initialize sampling subsystem\n", __func__);
         exit(1);
     }
-    int cpt = 1;
     while ((n_remain != 0 && !is_antiprompt) || params.interactive) {
         // predict
         if (!embd.empty()) {

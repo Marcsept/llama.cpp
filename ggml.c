@@ -9023,7 +9023,7 @@ static void ggml_compute_forward_dup(
 /**
  * Print element of a Array
  * @param log: where print
- * @param params: params
+
  * @param dst: the tensor who contain the operation
  * @param size: size
  * @param n: number of row
@@ -9031,25 +9031,25 @@ static void ggml_compute_forward_dup(
  * @param binary_: if it's a binary operation or not
  * @return: void
  */
-void BILLAUD_print_float_array_weigth(FILE *log, const struct ggml_compute_params * params, struct ggml_tensor * dst,  int size, int n, int p, bool binary_) {
+void BILLAUD_print_float_array_weigth(FILE *log, struct ggml_tensor * dst,  int size, int n, int p, bool binary_) {
     
-    float min = 99999;
-    float max = -99999;
+    double min = 99999;
+    double max = -99999;
     double mean = 0;
     double mean_square = 0;
-    float var = 0;
-    float ecart_type = 0;
-    float zero_per = 0;
-    float positive_ratio = 0;
-    float negative_ratio = 0;
-    float minus_1 = 0;
-    float minus_1_05 = 0;
-    float minus_05_01 = 0;
-    float minus_01_0 = 0;
-    float plus_0_01 = 0;
-    float plus_01_05 = 0; 
-    float plus_05_1 = 1;
-    float plus_1 = 0;
+    double var = 0;
+    double ecart_type = 0;
+    double zero_per = 0;
+    double positive_ratio = 0;
+    double negative_ratio = 0;
+    double minus_1 = 0;
+    double minus_1_05 = 0;
+    double minus_05_01 = 0;
+    double minus_01_0 = 0;
+    double plus_0_01 = 0;
+    double plus_01_05 = 0; 
+    double plus_05_1 = 1;
+    double plus_1 = 0;
 
 
    
@@ -9059,11 +9059,6 @@ void BILLAUD_print_float_array_weigth(FILE *log, const struct ggml_compute_param
         
 
         GGML_TENSOR_BINARY_OP_LOCALS
-
-        const int ith = params->ith;
-        const int nth = params->nth;
-
-        const enum ggml_type type = dst->type;
 
         // broadcast factors
         const int64_t r2 = ne12 / ne02;
@@ -9077,7 +9072,7 @@ void BILLAUD_print_float_array_weigth(FILE *log, const struct ggml_compute_param
                 for (int64_t i12 = 0; i12 < ne12; i12++) {  
                     float * array  = (float *) ((char *)dst->data + i12*nb2 + i13*nb3);
                     for (int i = 0; i < size; ++i) {
-                        float elem = array[i];
+                        double elem = (double)array[i];
                         if(elem < min){min=elem;}
                         if(elem > max){max=elem;}
                         mean = mean+elem;
@@ -9106,7 +9101,7 @@ void BILLAUD_print_float_array_weigth(FILE *log, const struct ggml_compute_param
             
                         
             for (int i = 0; i < size; ++i) {
-                float elem = array[i];
+                double elem = (double)array[i];
                 if(elem < min){min=elem;}
                 if(elem > max){max=elem;}
                 mean = mean+elem;
@@ -9146,7 +9141,12 @@ void BILLAUD_print_float_array_weigth(FILE *log, const struct ggml_compute_param
     
     
     fprintf(log, "%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f \n", min, max, mean,mean_square, var, ecart_type, zero_per, positive_ratio, negative_ratio,minus_1,minus_1_05,minus_05_01,minus_01_0,plus_0_01,plus_01_05,plus_05_1,plus_1);
-    
+    //fprintf(log, "%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f;%.4f \n",
+    //    (double)min, (double)max, (double)mean, (double)mean_square, (double)var, 
+    //    (double)ecart_type, (double)zero_per, (double)positive_ratio, 
+    //    (double)negative_ratio, (double)minus_1, (double)minus_1_05, 
+    //    (double)minus_05_01, (double)minus_01_0, (double)plus_0_01, 
+    //    (double)plus_01_05, (double)plus_05_1, (double)plus_1);
     
     
 }
@@ -17332,17 +17332,13 @@ const char* ggml_op_to_string(enum ggml_op op) {
 
 /**
  * Print element of a Array
- * @param params: params
+
  * @param dst: the tensor who contain the operation
  * @param name: what char* in array name
  * @param binary: if it's a binary operation or not
  * @return: void
  */
-void BILLAUD_print_weight_f32(
-        const struct ggml_compute_params * params,
-        struct ggml_tensor * dst,
-        const char * name,
-        bool binary){
+void BILLAUD_print_weight_f32(struct ggml_tensor * dst, const char * name, bool binary){
     assert(params->ith == 0);
 
     char filename[256];
@@ -17363,17 +17359,17 @@ void BILLAUD_print_weight_f32(
         const int nc = dst->src[0]->ne[0];
         assert( dst->src[0]->nb[0] == sizeof(float));
         //Res_name / Dim1/ Dim2 / Dim3 / Operation / Src1 / Src2 
-        fprintf(logFile, "%s;%s;%d;%d;%d;",ggml_op_to_string(dst->op), dst->src[0]->name, dst->src[0]->ne[0], dst->src[0]->ne[1], dst->src[0]->ne[2]); 
-        BILLAUD_print_float_array_weigth(logFile, params, dst, nc, n, 0, binary);
+        fprintf(logFile, "%s;%s;%lld;%lld;%lld;",ggml_op_to_string(dst->op), dst->src[0]->name, dst->src[0]->ne[0], dst->src[0]->ne[1], dst->src[0]->ne[2]); 
+        BILLAUD_print_float_array_weigth(logFile, dst, nc, n, 0, binary);
         
     }else { if(strstr(dst->src[1]->name, name)) { 
         const int n  = ggml_nrows(dst->src[1]);
         const int nc = dst->src[1]->ne[0];
         assert( dst->src[1]->nb[0] == sizeof(float));
         //Res_name / Dim1/ Dim2 / Dim3 / Operation / Src1 / Src2 
-        fprintf(logFile, "%s;%s;%d;%d;%d;", ggml_op_to_string(dst->op), dst->src[1]->name, dst->src[1]->ne[0], dst->src[1]->ne[1], dst->src[1]->ne[2]); 
+        fprintf(logFile, "%s;%s;%lld;%lld;%lld;", ggml_op_to_string(dst->op), dst->src[1]->name, dst->src[1]->ne[0], dst->src[1]->ne[1], dst->src[1]->ne[2]); 
         
-        BILLAUD_print_float_array_weigth(logFile, params, dst, nc, n, 1, binary);
+        BILLAUD_print_float_array_weigth(logFile, dst, nc, n, 1, binary);
 
 
     }
@@ -17384,12 +17380,11 @@ void BILLAUD_print_weight_f32(
 
 /**
  * Call diferent print methode
- * @param params: params
+
  * @param dst: the tensor who contain the operation
  * @return: void
  */
 void BILLAUD_weight_repartition(
-        const struct ggml_compute_params * params,
         struct ggml_tensor * dst){
         
         char * name1 = dst->src[0]-> name ;
@@ -17398,56 +17393,56 @@ void BILLAUD_weight_repartition(
         char * attn_norm = "attn_norm.weight";
 
         if((strstr(name1, attn_norm)) || (strstr(name2, attn_norm))){
-            BILLAUD_print_weight_f32(params, dst, attn_norm, false);
+            BILLAUD_print_weight_f32(dst, attn_norm, false);
             //fprintf(stderr, "%s\n", attn_norm);
         }
 
         char * attn_qkv = "attn_qkv.weight";
 
         if((strstr(name1, attn_qkv)) || (strstr(name2, attn_qkv))){
-            BILLAUD_print_weight_f32(params, dst, attn_qkv, true);
+            BILLAUD_print_weight_f32(dst, attn_qkv, true);
             //fprintf(stderr, "%s\n", attn_qkv);
         }
 
         char * attn_output = "attn_output.weight";
 
         if((strstr(name1, attn_output)) || (strstr(name2, attn_output))){
-            BILLAUD_print_weight_f32(params, dst, attn_output, true);
+            BILLAUD_print_weight_f32(dst, attn_output, true);
             //fprintf(stderr, "%s\n", attn_output);
         }
 
         char * ffn_norm = "ffn_norm.weight";
 
         if((strstr(name1, ffn_norm)) || (strstr(name2, ffn_norm))){
-            BILLAUD_print_weight_f32(params, dst, ffn_norm, false);
+            BILLAUD_print_weight_f32(dst, ffn_norm, false);
             //fprintf(stderr, "%s\n", ffn_norm);
         }
 
         char * ffn_up = "ffn_up.weight";
 
         if((strstr(name1, ffn_up)) || (strstr(name2, ffn_up))){
-            BILLAUD_print_weight_f32(params, dst, ffn_up, true);
+            BILLAUD_print_weight_f32(dst, ffn_up, true);
             //fprintf(stderr, "%s\n", ffn_up);
         }
 
         char * ffn_down = "ffn_down.weight";
 
         if((strstr(name1, ffn_down)) || (strstr(name2, ffn_down))){
-            BILLAUD_print_weight_f32(params, dst, ffn_down, true);
+            BILLAUD_print_weight_f32(dst, ffn_down, true);
             //fprintf(stderr, "%s\n", ffn_down);
         }
 
         char * output_norm = "output_norm.weight";
 
         if((strstr(name1, output_norm)) || (strstr(name2, output_norm))){
-            BILLAUD_print_weight_f32(params, dst, output_norm, false);
+            BILLAUD_print_weight_f32(dst, output_norm, false);
             //fprintf(stderr, "%s\n", output_norm);
         }
 
         char * output = "output.weight";
 
         if((strstr(name1, output) && !(strstr(name1, "attn_"))) || (strstr(name2, output)&& !(strstr(name2, "attn_")))){ // BILLAUD I change here to verifieir attn_
-            BILLAUD_print_weight_f32(params, dst, output, true);
+            BILLAUD_print_weight_f32(dst, output, true);
             //fprintf(stderr, "%s\n", output);
         }
 
@@ -17460,7 +17455,7 @@ void BILLAUD_weight_repartition(
  * alternate between true and false
  * @return: True or False
  */
-bool toggle() {
+bool toggle(void) {
     static bool state = true;
     bool current_state = state;
     state = !state;
@@ -17483,7 +17478,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
         case GGML_OP_ADD:
             {
                 //fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
-                BILLAUD_weight_repartition(params, tensor);
+                BILLAUD_weight_repartition(tensor);
                 ggml_compute_forward_add(params, tensor);
             } break;
         case GGML_OP_ADD1:
@@ -17501,7 +17496,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
         case GGML_OP_MUL:
             {  
                 //fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
-                BILLAUD_weight_repartition(params, tensor);
+                BILLAUD_weight_repartition(tensor);
                 ggml_compute_forward_mul(params, tensor);
             } break;
         case GGML_OP_DIV:
@@ -17572,7 +17567,7 @@ static void ggml_compute_forward(struct ggml_compute_params * params, struct ggm
             {
                 if(toggle()) { //Because this function was call 2 time when it's this operation.
                     //fprintf(stderr, "%s,   %s\n", ggml_op_to_string(tensor->op), tensor->name);
-                    BILLAUD_weight_repartition(params, tensor);
+                    BILLAUD_weight_repartition(tensor);
                 }
                 ggml_compute_forward_mul_mat(params, tensor, state);
             } break;
